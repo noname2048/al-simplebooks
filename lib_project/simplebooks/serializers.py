@@ -1,3 +1,4 @@
+from django.http.response import HttpResponseBadRequest
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -12,30 +13,41 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["email", "username"]
 
 class BookshelfSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = models.Bookshelf
         fields = ["id", "user", "title", "color"]
 
-    def create(self, validated_data):
-        request = self.context.get("request")
-        if request.user:
-            bookshelf = models.Bookshelf(**validated_data)
-            bookshelf.user = request.user
-            return bookshelf
+    def validate_user(self, value):
+        request = self.context["request"]
+        if request.user.is_authenticated:
+            username = request.user.username
         else:
-            raise AuthenticationFailed
+            username = "admin"
+
+        user = get_user_model().objects.get(username=username)
+        if not user.exists():
+            raise HttpResponseBadRequest
+
+        return value
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        if not user.is_authenticated:
+            user = get_user_model().objects.get(username="admin")
+        return models.Bookshelf.objects.create(**validated_data, user=user)
 
     def update(self, instance, validated_data):
-        bookshelf = super().update(instance, validated_data)
+        user = self.context["request"].user
+        if not user.is_authenticated:
+            user = get_user_model().objects.get(username="admin")
 
-        request = self.context.get("request")
-        if request.user == bookshelf.user:
-            return bookshelf
-        else:
-            raise AuthenticationFailed
+        instance.title = validated_data.get("title", instance.title)
+        instance.color = validated_data.get("color", instance.color) 
+        instance.save()
 
+        return instance 
 
 class OriginBookSerializer(serializers.ModelSerializer):
     class Meta:

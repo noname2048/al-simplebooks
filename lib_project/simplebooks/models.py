@@ -11,7 +11,7 @@ class TimeStampedModel(models.Model):
 class Bookshelf(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.deletion.CASCADE)
     title = models.CharField(max_length=100)
-    color = models.CharField(max_length=10)
+    color = models.CharField(max_length=10, blank=True)
 
 
 class Book(TimeStampedModel):

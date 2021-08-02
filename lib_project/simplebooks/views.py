@@ -14,6 +14,7 @@ from rest_framework.generics import ListAPIView
 
 from django.utils import encoding
 
+
 class RecentBookshelfListView(ListAPIView):
 
     queryset = models.Bookshelf.objects.all()
@@ -38,7 +39,7 @@ class RecentBookshelfListView(ListAPIView):
         return response.Response(serializer.data)
         
 
-class BookshelfViewSet(viewsets.ViewSet):
+class BookshelfViewSet(viewsets.GenericViewSet):
 
     queryset = models.Bookshelf.objects.all()
 
@@ -59,11 +60,13 @@ class BookshelfViewSet(viewsets.ViewSet):
         return response.Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        serializer = serializers.BookshelfSerializer(
-            data=request.POST, context={"request", request}
-        )
-        serializer.save()
-        return response.Response(serializer.data)
+        serializer = serializers.BookshelfSerializer(data=request.POST, context={"request": request})
+
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data)
+        else:
+            return response.Response(serializer.errors)
 
     def retrieve(self, request, *args, **kwargs):
         queryset = models.Bookshelf.objects.all()
@@ -85,6 +88,8 @@ class BookshelfViewSet(viewsets.ViewSet):
         pass
 
     def get_permissions(self):
+        return [permission() for permission in [permissions.AllowAny]]
+
         if self.action in ["list", "retrieve"]:
             permission_classes = [permissions.AllowAny]
         elif self.action in ["create", "update", "destroy"]:
