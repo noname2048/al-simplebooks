@@ -4,6 +4,7 @@ from rest_framework import generics
 from rest_framework import viewsets
 from rest_framework import response
 from rest_framework import permissions
+from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from . import models
 
@@ -70,9 +71,9 @@ class BookshelfViewSet(viewsets.GenericViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         queryset = models.Bookshelf.objects.all()
-        queryset = queryset.filter(pk=kwargs["pk"])
-        bookshelf = get_object_or_404(queryset)
-        return response.Response(bookshelf.values())
+        obj = get_object_or_404(queryset, **{"pk": kwargs.get("pk")})
+        serializer = serializers.BookshelfSerializer(instance=obj) 
+        return response.Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         queryset = models.Bookshelf.objects.all()
@@ -85,7 +86,15 @@ class BookshelfViewSet(viewsets.GenericViewSet):
         return serializer
 
     def destroy(self, request, *args, **kwargs):
-        pass
+        queryset = models.Bookshelf.objects.all()
+        obj = get_object_or_404(queryset, **{"pk": kwargs.get("pk")})
+        
+        user = request.user if request.user.is_authenticated else get_user_model().objects.get(username='admin')
+        if user == obj.user:
+            obj.delete()
+            return response.Response(None, status=status.HTTP_204_NO_CONTENT)
+        else:
+            return response.Response(None, status=status.HTTP_403_FORBIDDEN)
 
     def get_permissions(self):
         return [permission() for permission in [permissions.AllowAny]]
