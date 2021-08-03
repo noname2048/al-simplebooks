@@ -39,10 +39,6 @@ class BookshelfSerializer(serializers.ModelSerializer):
         return models.Bookshelf.objects.create(**validated_data, user=user)
 
     def update(self, instance, validated_data):
-        user = self.context["request"].user
-        if not user.is_authenticated:
-            user = get_user_model().objects.get(username="admin")
-
         instance.title = validated_data.get("title", instance.title)
         instance.color = validated_data.get("color", instance.color) 
         instance.save()

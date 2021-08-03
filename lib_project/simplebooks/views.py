@@ -75,15 +75,26 @@ class BookshelfViewSet(viewsets.GenericViewSet):
         serializer = serializers.BookshelfSerializer(instance=obj) 
         return response.Response(serializer.data)
 
+    def partial_update(self, request, *args, **kwargs):
+        kwargs["partial"] = True
+        return self.update(request, *args, **kwargs)
+
     def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
         queryset = models.Bookshelf.objects.all()
-        queryset = queryset.filter(pk=kwargs["pk"])
-        bookshelf = get_object_or_404(queryset)
-        serializer = serializers.BookshelfSerializer(
-            instance=bookshelf, data=request.POST, context={"request": request}
-        )
-        serializer.save()
-        return serializer
+        instance = get_object_or_404(queryset, **{"pk": kwargs.get("pk")})
+
+        user = request.user if request.user.is_authenticated else get_user_model().objects.get(username="admin")
+        if instance.user != user:
+            return response.Response(status=status.HTTP_403_FORBIDDEN)
+
+        serializer = serializers.BookshelfSerializer(instance=instance, data=request.POST, partial=partial)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data)
+
+        return response.Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):
         queryset = models.Bookshelf.objects.all()
