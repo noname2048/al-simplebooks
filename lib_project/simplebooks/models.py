@@ -8,6 +8,7 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
+
 class Bookshelf(TimeStampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.deletion.CASCADE)
     title = models.CharField(max_length=100)
