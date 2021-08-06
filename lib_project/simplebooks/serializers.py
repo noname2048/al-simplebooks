@@ -1,7 +1,8 @@
-from django.http.response import HttpResponseBadRequest
+from django.http.response import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
+from django.http import Http404
 from django.contrib.auth import get_user_model
 
 from . import models
@@ -11,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ["email", "username"]
+
 
 class BookshelfSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
@@ -45,18 +47,26 @@ class BookshelfSerializer(serializers.ModelSerializer):
 
         return instance 
 
+
 class OriginBookSerializer(serializers.ModelSerializer):
     class Meta:
-        models = models.OriginalBook
-        fields = ["id", "isbn", "title", "publisher", "author", "thumbnail"]
+        model = models.OriginalBook
+        fields = ["isbn", "title", "publisher", "author", "thumbnail"]
         read_only_fields = []
+
+    def __str__(self):
+        return f"{self.title}({self.isbn})"
 
 
 class BookshelfBookSerializer(serializers.ModelSerializer):
-    bookshelf = BookshelfSerializer()
-    origin = OriginBookSerializer()
+    bookshelf = BookshelfSerializer(read_only=True)
+    origin = OriginBookSerializer(read_only=True)
 
     class Meta:
-        models = models.Book
+        model = models.Book
         fields = ["id", "bookshelf", "isbn", "have", "origin"]
         read_only_fields = []
+
+    def create(self, validated_data):
+        bookshelf_pk = self.context["bookshelf_pk"]
+        return models.Book.objects.create(bookshelf_id=bookshelf_pk, **validated_data)
