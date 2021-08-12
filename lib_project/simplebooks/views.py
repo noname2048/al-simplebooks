@@ -18,30 +18,6 @@ from rest_framework.generics import ListAPIView
 from django.utils import encoding
 
 
-class RecentBookshelfListView(generics.ListAPIView):
-    """will be deprecicate"""
-    queryset = models.Bookshelf.objects.all()
-    
-    def list(self, request, *args, **kwargs):
-        queryset = models.Bookshelf.objects.select_related("user").all()
-
-        if request.user.is_authenticated:
-            username = request.user.username
-        else:
-            username = "admin"
-
-        username = request.GET.get("username", username)
-        queryset = queryset.filter(user__username__icontains=username)        
-        
-        q = request.GET.get("q")
-        if q:
-            queryset = queryset.filter(title__icontains=q)
-        queryset = queryset.order_by("-updated_at")
-
-        serializer = serializers.BookshelfSerializer(queryset[:10], many=True)
-        return response.Response(serializer.data)
-        
-
 class BookshelfViewSet(viewsets.GenericViewSet):
 
     queryset = models.Bookshelf.objects.select_related("user").all()
@@ -133,13 +109,13 @@ class BookshelfViewSet(viewsets.GenericViewSet):
     def get_permissions(self):
         return [permission() for permission in [permissions.AllowAny]]
 
-        if self.action in ["list", "retrieve"]:
-            permission_classes = [permissions.AllowAny]
-        elif self.action in ["create", "update", "destroy"]:
-            permission_classes = [permissions.IsAuthenticated]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
+        # if self.action in ["list", "retrieve"]:
+        #     permission_classes = [permissions.AllowAny]
+        # elif self.action in ["create", "update", "destroy"]:
+        #     permission_classes = [permissions.IsAuthenticated]
+        # else:
+        #     permission_classes = [permissions.IsAuthenticated]
+        # return [permission() for permission in permission_classes]
     
 
 class BookViewSet(viewsets.GenericViewSet):
