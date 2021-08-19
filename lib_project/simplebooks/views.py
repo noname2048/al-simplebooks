@@ -164,3 +164,13 @@ class BookViewSet(viewsets.GenericViewSet):
 
     def destroy(self, request, *args, **kwargs):
         pass
+
+
+class CommentForBookshelfViewSet(viewsets.GenericViewSet):
+    serializer_class = ...
+    pass
+
+
+class CommentForOriginalBookViewSet(viewsets.GenericViewSet):
+    serializer_class = ...
+    pass
