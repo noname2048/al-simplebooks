@@ -70,3 +70,20 @@ class BookshelfBookSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         bookshelf_pk = self.context["bookshelf_pk"]
         return models.Book.objects.create(bookshelf_id=bookshelf_pk, **validated_data)
+
+
+class CommentForBookshelfSerializer(serializers.ModelSerializer):
+
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = models.Bookshelf
+        fields = ["id", "user", "bookshelf", "content"]
+
+
+class CommentForOriginalBookSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = models.OriginalBook
+        fields = ["id", "user", "original_book", "content"]

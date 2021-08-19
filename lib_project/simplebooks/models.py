@@ -30,7 +30,7 @@ class OriginalBook(TimeStampedModel):
     publisher = models.CharField(max_length=50)
     author = models.CharField(max_length=30)
 
-class CommentForBook(TimeStampedModel):
+class CommentForOriginalBook(TimeStampedModel):
     """책에 대한 코멘트. 오리진 책에 대해 코멘트한다.
     1. 사용자
     2. 책
@@ -38,7 +38,7 @@ class CommentForBook(TimeStampedModel):
     """
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.deletion)
-    book = models.ForeignKey("OriginBook", on_delete=models.deletion)
+    original_book = models.ForeignKey("OriginBook", on_delete=models.deletion)
     content = models.CharField(max_length=400)
 
 class CommentForBookshelf(TimeStampedModel):
