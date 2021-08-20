@@ -9,6 +9,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework import decorators
 from django.http import Http404
 from . import models
+from rest_framework.response import Response
 
 from django.contrib.auth import get_backends, get_user, get_user_model
 from . import serializers
@@ -167,10 +168,49 @@ class BookViewSet(viewsets.GenericViewSet):
 
 
 class CommentForBookshelfViewSet(viewsets.GenericViewSet):
-    serializer_class = ...
-    pass
+    serializer_class = serializers.CommentForBookshelfSerializer
+
+    def get_queryset(self):
+        bookshelf_id = self.kwargs.get("bookshelf_id")
+        if bookshelf_id is None:
+            raise Http404("bookshelf_id is required")
+        try:
+            bookshelf = models.CommentForBookshelf.objects.get(bookshelf_id=bookshelf_id)
+        except models.CommentForBookshelf.DoesNotExist:
+            raise Http404("bookshelf not exists")
+
+        qs = models.CommentForBookshelf.objects.select_related("bookshelf_id").filter(bookshelf_id=bookshelf_id)
+        return qs
+
+    def get_permissions(self):
+        if self.action in ['list']:
+            return [permission() for permission in [permissions.AllowAny]]
+        elif self.action in ['create']:
+            return [permission() for permission in [permissions.IsAuthenticated]]
+
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        serializer = serializers.CommentForBookshelfSerializer(qs, many=True)
+        return Response(qs)
+
+    def create(self, request, *args, **kwagrs):
+
+        bookshelf_id = kwagrs.get("bookshelf_id")
+        if bookshelf_id is None:
+            raise Http404()
+        try:
+            bookshelf = models.CommentForBookshelf.objects.get(pk=bookshelf_id)
+        except models.CommentForBookshelf.DoesNotExist:
+            raise Http404
+
+        serializer = serializers.CommentForBookshelfSerializer(data=request.POST)
+        if serializer.is_valid():
+            serializer.save(user=self.request.user, bookshelf=bookshelf)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentForOriginalBookViewSet(viewsets.GenericViewSet):
-    serializer_class = ...
-    pass
+    serializer_class = serializers.CommentForOriginalBookSerializer
+

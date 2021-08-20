@@ -75,6 +75,7 @@ class BookshelfBookSerializer(serializers.ModelSerializer):
 class CommentForBookshelfSerializer(serializers.ModelSerializer):
 
     user = UserSerializer(read_only=True)
+    bookshelf = BookshelfSerializer(read_only=True)
 
     class Meta:
         model = models.Bookshelf
