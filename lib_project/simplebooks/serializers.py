@@ -78,7 +78,7 @@ class CommentForBookshelfSerializer(serializers.ModelSerializer):
     bookshelf = BookshelfSerializer(read_only=True)
 
     class Meta:
-        model = models.Bookshelf
+        model = models.CommentForBookshelf
         fields = ["id", "user", "bookshelf", "content"]
 
 
@@ -86,5 +86,5 @@ class CommentForOriginalBookSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
-        model = models.OriginalBook
+        model = models.CommentForOriginalBook
         fields = ["id", "user", "original_book", "content"]

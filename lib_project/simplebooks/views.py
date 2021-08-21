@@ -122,6 +122,7 @@ class BookshelfViewSet(viewsets.GenericViewSet):
 class BookViewSet(viewsets.GenericViewSet):
     
     serializer_class = serializers.BookshelfBookSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         return [permissions() for permissions in [permissions.AllowAny]]
@@ -169,29 +170,30 @@ class BookViewSet(viewsets.GenericViewSet):
 
 class CommentForBookshelfViewSet(viewsets.GenericViewSet):
     serializer_class = serializers.CommentForBookshelfSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         bookshelf_id = self.kwargs.get("bookshelf_id")
         if bookshelf_id is None:
             raise Http404("bookshelf_id is required")
         try:
-            bookshelf = models.CommentForBookshelf.objects.get(bookshelf_id=bookshelf_id)
-        except models.CommentForBookshelf.DoesNotExist:
+            bookshelf = models.Bookshelf.objects.get(id=bookshelf_id)
+        except models.Bookshelf.DoesNotExist:
             raise Http404("bookshelf not exists")
 
-        qs = models.CommentForBookshelf.objects.select_related("bookshelf_id").filter(bookshelf_id=bookshelf_id)
+        qs = models.CommentForBookshelf.objects.select_related("bookshelf").filter(bookshelf__id=bookshelf_id)
         return qs
 
-    def get_permissions(self):
-        if self.action in ['list']:
-            return [permission() for permission in [permissions.AllowAny]]
-        elif self.action in ['create']:
-            return [permission() for permission in [permissions.IsAuthenticated]]
+    # def get_permissions(self):
+    #     if self.action in ['list']:
+    #         return [permission() for permission in [permissions.AllowAny]]
+    #     elif self.action in ['create']:
+    #         return [permission() for permission in [permissions.IsAuthenticated]]
 
     def list(self, request, *args, **kwargs):
         qs = self.get_queryset()
         serializer = serializers.CommentForBookshelfSerializer(qs, many=True)
-        return Response(qs)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwagrs):
 
@@ -199,7 +201,7 @@ class CommentForBookshelfViewSet(viewsets.GenericViewSet):
         if bookshelf_id is None:
             raise Http404()
         try:
-            bookshelf = models.CommentForBookshelf.objects.get(pk=bookshelf_id)
+            bookshelf = models.CommentForBookshelf.objects.get(id=bookshelf_id)
         except models.CommentForBookshelf.DoesNotExist:
             raise Http404
 
